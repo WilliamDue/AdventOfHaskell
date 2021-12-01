@@ -7,4 +7,4 @@ main :: IO ()
 main = do
       content <- getContents
       let list' = toIntList content
-      print . length . filter (True==) . zipWith (<) list' $ tail list'
+      print . length . filter id . zipWith (<) list' $ tail list'

@@ -8,4 +8,4 @@ main = do
       content <- getContents
       let list' = toIntList content
       let listSum = zipWith3 (\a b c -> a + b + c) list' (tail list') (tail $ tail list')
-      print . length . filter (True==) . zipWith (<) listSum $ tail listSum
+      print . length . filter id . zipWith (<) listSum $ tail listSum
