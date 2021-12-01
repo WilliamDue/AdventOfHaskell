@@ -1,5 +1,3 @@
-import Data.Set ( fromList, toList )
-
 toIntList :: String -> [Integer]
 toIntList = fmap (\n -> read n :: Integer) . lines
 
