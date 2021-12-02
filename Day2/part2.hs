@@ -7,18 +7,16 @@ clean = fromMaybe [] . mapM (toTuple . words) . lines
                   toTuple [a, b] = Just (a, toInt b)
                   toTuple x = Nothing
 
-program :: [(String, Integer)] -> (Integer, Integer) -> Maybe (Integer, Integer)
-program [] (a, b) = Just (a, b)
-program (x:xs) (a, b)
-      | movement == "forward" = program xs (a + scaler, b)
-      | movement == "down" = program xs (a, b + scaler)
-      | movement == "up" = program xs  (a, b - scaler)
+program :: [(String, Integer)] -> (Integer, Integer, Integer) -> Maybe (Integer, Integer)
+program [] (horiz, depth, _) = Just (horiz, depth)
+program ((movement, scaler):xs) (horiz, depth, aim)
+      | movement == "down" = program xs (horiz, depth, aim + scaler)
+      | movement == "up" = program xs (horiz, depth, aim - scaler)
+      | movement == "forward" = program xs (horiz + scaler, depth + scaler * aim, aim)
       | otherwise = Nothing
-      where movement = fst x
-            scaler = snd x
 
 main :: IO ()
 main = do
       content <- getContents
       let list' = clean content
-      print . fmap (uncurry (*)) $ program list' (0, 0)
+      print . fmap (uncurry (*))  $ program list' (0, 0, 0)

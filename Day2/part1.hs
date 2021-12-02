@@ -7,6 +7,7 @@ clean = fromMaybe [] . mapM (toTuple . words) . lines
                   toTuple [a, b] = Just (a, toInt b)
                   toTuple x = Nothing
 
+
 program :: [(String, Integer)] -> (Integer, Integer) -> Maybe (Integer, Integer)
 program [] (a, b) = Just (a, b)
 program (x:xs) (a, b)
@@ -16,6 +17,7 @@ program (x:xs) (a, b)
       | otherwise = Nothing
       where movement = fst x
             scaler = snd x
+
 
 main :: IO ()
 main = do
