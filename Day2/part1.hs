@@ -13,7 +13,7 @@ program [] (a, b) = Just (a, b)
 program (x:xs) (a, b)
       | movement == "forward" = program xs (a + scaler, b)
       | movement == "down" = program xs (a, b + scaler)
-      | movement == "up" = program xs  (a, b - scaler)
+      | movement == "up" = program xs (a, b - scaler)
       | otherwise = Nothing
       where movement = fst x
             scaler = snd x

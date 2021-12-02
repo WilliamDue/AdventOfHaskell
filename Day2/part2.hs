@@ -19,4 +19,4 @@ main :: IO ()
 main = do
       content <- getContents
       let list' = clean content
-      print . fmap (uncurry (*))  $ program list' (0, 0, 0)
+      print . fmap (uncurry (*)) $ program list' (0, 0, 0)
