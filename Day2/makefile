@@ -1,9 +1,10 @@
 GHC=ghc
+ARGS = -O2 -threaded
 
 .PHONY: run clean
 
 part%:
-	@$(GHC) $@.hs -o $@.run
+	@$(GHC) $(ARGS) $@.hs -o $@.run
 	@rm *.o *.hi
 
 clean:
