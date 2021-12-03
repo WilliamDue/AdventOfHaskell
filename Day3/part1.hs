@@ -1,17 +1,11 @@
 import Data.List ( transpose, partition, sortOn )
 import Data.Char( digitToInt )
 import Control.Exception ( throw )
-import Data.Bool(bool)
-
-
-bin2dec :: [Bool] -> Int
-bin2dec = foldl (\a -> (+) (2*a) . bool 0 1) 0
-
-
+import Data.Bool( bool )
 
 program :: String -> Int
 program = product
-          . map bin2dec
+          . map (foldl (\a -> (+) (2*a) . bool 0 1) 0)
           . transpose
           . map (
                map ((==1) . simplify)

@@ -34,5 +34,5 @@ main :: IO ()
 main = do
       content <- getContents
       let mCom = parse . mostCommon 0 $ lines content
-      let lCom = parse .leastCommon 0 $ lines content
+      let lCom = parse . leastCommon 0 $ lines content
       print $ mCom * lCom
