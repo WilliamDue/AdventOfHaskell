@@ -1,6 +1,4 @@
-import Data.Array ( Array, listArray )
 import Data.List.Split ( splitOn )
-import Graphics.Rendering.OpenGL (auxBuffers)
 import Data.List ( transpose )
 
 type BingoBoard = [[(Integer, Bool)]]
