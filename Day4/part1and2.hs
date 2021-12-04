@@ -3,16 +3,13 @@ import Data.List.Split ( splitOn )
 import Graphics.Rendering.OpenGL (auxBuffers)
 import Data.List ( transpose )
 
+type BingoBoard = [[(Integer, Bool)]]
+
 toInt :: String -> Integer
 toInt n = read n :: Integer
 
-
-type BingoBoard = [[(Integer, Bool)]]
-
-
 matrixParse :: String -> BingoBoard
 matrixParse = map (map (\n -> (toInt n, False)) . words) . lines
-
 
 parse :: String -> ([Integer], [BingoBoard])
 parse s = (first, second)
@@ -38,19 +35,27 @@ update _ n = n
 updateMatrix :: Integer -> BingoBoard -> BingoBoard
 updateMatrix n = map (map (update n))
 
-
 sumMatrix :: BingoBoard -> Integer
 sumMatrix = sum . map (sum . map fst . filter (not . snd))
 
-play :: [Integer] -> [BingoBoard] -> Integer
-play [] boards = -1
-play (x:xs) boards
-      | null winBoards = play xs updateBoards
+playWin :: [Integer] -> [BingoBoard] -> Integer
+playWin [] boards = -1
+playWin (x:xs) boards
+      | null winBoards = playWin xs updateBoards
       | otherwise = (*x) . sumMatrix $ head winBoards
       where updateBoards = map (updateMatrix x) boards
             winBoards = filter winCheck updateBoards
 
+playLose :: [Integer] -> [BingoBoard] -> Integer
+playLose [] boards = -1
+playLose (x:xs) boards
+      | null loseBoards = (*x) . sumMatrix $ head updateBoards
+      | otherwise = playLose xs loseBoards
+      where updateBoards = map (updateMatrix x) boards
+            loseBoards = filter (not . winCheck) updateBoards
+
 main :: IO ()
 main = do
       content <- getContents
-      print . uncurry play $ parse content
+      print . uncurry playWin $ parse content
+      print . uncurry playLose $ parse content
