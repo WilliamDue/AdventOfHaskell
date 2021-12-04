@@ -1,18 +1,13 @@
-import Data.Array ( Array, listArray )
 import Data.List.Split ( splitOn )
-import Graphics.Rendering.OpenGL (auxBuffers)
 import Data.List ( transpose )
 
 toInt :: String -> Integer
 toInt n = read n :: Integer
 
-
 type BingoBoard = [[(Integer, Bool)]]
-
 
 matrixParse :: String -> BingoBoard
 matrixParse = map (map (\n -> (toInt n, False)) . words) . lines
-
 
 parse :: String -> ([Integer], [BingoBoard])
 parse s = (first, second)
@@ -37,7 +32,6 @@ update _ n = n
 
 updateMatrix :: Integer -> BingoBoard -> BingoBoard
 updateMatrix n = map (map (update n))
-
 
 sumMatrix :: BingoBoard -> Integer
 sumMatrix = sum . map (sum . map fst . filter (not . snd))
