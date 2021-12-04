@@ -15,14 +15,10 @@ parse s = (first, second)
             first = map toInt . splitOn "," $ head terms
             second = map matrixParse $ tail terms
 
-rowCheck :: BingoBoard -> Bool
-rowCheck = any (all snd)
-
-colCheck :: BingoBoard -> Bool
-colCheck = rowCheck . transpose
-
 winCheck :: BingoBoard -> Bool
 winCheck n = rowCheck n || colCheck n
+      where rowCheck = any (all snd)
+            colCheck = rowCheck . transpose
 
 update :: Integer -> (Integer, Bool) -> (Integer, Bool)
 update n (a, False)
