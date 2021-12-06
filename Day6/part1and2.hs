@@ -4,16 +4,12 @@ import qualified Data.Map as Map
 
 
 parse :: String -> [Int]
-parse = map toInt . splitOn ","
-      where toInt n = read n :: Int
+parse = map read . splitOn ","
 
 func :: Map.Map Int Int -> Map.Map Int Int
-func n = Map.unionWith (+) n'' mOne'
-      where n' = Map.mapKeys (\k -> k - 1) n
-            (mOne, n'') = Map.partitionWithKey (\k _ -> k == -1) n'
-            mOnes = Map.findWithDefault 0 (-1) mOne
-            mOne' = Map.fromList [(8, mOnes), (6, mOnes)]
-
+func n = Map.unionWith (+) n' mOne'
+      where (mOne, n') = Map.partitionWithKey (\k _ -> k == -1) $ Map.mapKeys (\k -> k - 1) n
+            mOne' = (\m -> Map.fromList [(8, m), (6, m)]) $ Map.findWithDefault 0 (-1) mOne
 
 toMap :: [Int] -> Map.Map Int Int
 toMap = foldl1 (Map.unionWith (+)) . map (\n -> Map.fromList [(n, 1)])
