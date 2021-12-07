@@ -5,15 +5,19 @@ import qualified Data.Map as Map
 parse :: String -> [Int]
 parse = map read . splitOn ","
 
-posFuel :: Int -> [Int] -> Int
-posFuel p = sum . map (abs . (p-))
+posFuelPart1 :: Int -> [Int] -> Int
+posFuelPart1 p = sum . map (abs . (p-))
 
-minFuel :: [Int] -> Int
-minFuel n = minimum $ map (`posFuel` n) [0..maxPos]
+posFuelPart2 :: Int -> [Int] -> Int
+posFuelPart2 p = sum . map (tri . abs . (p-))
+      where tri n = n * (n + 1) `div` 2
+
+minFuel :: (Int -> [Int] -> Int) -> [Int] -> Int
+minFuel posFuel n = minimum $ map (`posFuel` n) [0..maxPos]
       where maxPos = maximum n
-
 
 main :: IO ()
 main = do
       content <- getContents
-      print . minFuel $ parse content
+      print . minFuel posFuelPart1 $ parse content
+      print . minFuel posFuelPart2 $ parse content
