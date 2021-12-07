@@ -1,5 +1,4 @@
 import Data.List.Split ( splitOn )
-import qualified Data.Map as Map
 
 
 parse :: String -> [Int]
