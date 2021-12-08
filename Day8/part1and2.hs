@@ -1,7 +1,5 @@
 import Data.List.Split ( splitOn, )
-import Data.List ( find )
 import qualified Data.Set as Set
-import Data.Char (digitToInt)
 
 
 parse :: String -> [([String], [String])]
@@ -9,8 +7,8 @@ parse = map (toTuple . map words . splitOn " | ") . lines
       where toTuple [a, b] = (a, b)
             toTuple _ = error "wrong length"
 
-predicate :: ([String], [String]) -> Int
-predicate (_, b) =  length . filter aux $ map length b
+countNaive :: ([String], [String]) -> Int
+countNaive (_, b) =  length . filter aux $ map length b
       where aux :: Int -> Bool
             aux n = n == 4 || n == 2 || n == 3 || n == 7
 
@@ -43,5 +41,5 @@ comptueNumber n = sum . zipWith (*) [10^n | n <- [0..]] . reverse $ map (snd . f
 main :: IO ()
 main = do
       content <- getContents
-      print . sum . map predicate  $ parse content
+      print . sum . map countNaive  $ parse content
       print . sum . map comptueNumber $ parse content
