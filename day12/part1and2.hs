@@ -6,9 +6,10 @@ import Data.List.Split ( splitOn )
 import Data.Char (isLower, isUpper)
 import Data.Graph.Inductive (neighbors)
 import Data.Maybe (fromJust, fromMaybe)
+import Distribution.Simple (UserHooks(preDoctest))
 
-input :: IO String
-input = getContents
+type Graph = (S.Set String, M.Map String (S.Set String))
+type Path = [String]
 
 missingEdges :: [(String, String)] -> [(String, String)]
 missingEdges = concatMap aux
@@ -26,9 +27,6 @@ toTuple _ = error "Invalid input."
 toList' :: (a, a) -> [a]
 toList' (a, b) = [a, b]
 
-type Graph = (S.Set String, M.Map String (S.Set String))
-type Path = [String]
-
 parse :: String -> Graph
 parse text = (nodes, edges)
       where edges' = map (toTuple . splitOn "-") $ lines text
@@ -42,44 +40,58 @@ findAllPaths1 :: M.Map String Bool -> Path -> Graph -> String -> [Path]
 findAllPaths1 visited lastPath graph rootLabel
       | null neighbors = [lastPath ++ [rootLabel]]
       | isVisited = [lastPath ++ [rootLabel]]
-      | otherwise = newPath : concatMap (findAllPaths1 visited' newPath graph) neighbors
+      | otherwise = newPath : concatMap (findAllPaths1 visited'' newPath graph) neighbors
       where (nodes, edges) = graph
             newPath = lastPath ++ [rootLabel]
             neighbors = S.toList $ fromJust $ M.lookup rootLabel edges
             (uppercase, lowercase) = M.partitionWithKey (curry (all isUpper . fst)) visited
-            uppercase' = M.map (const False) uppercase 
-            visited' = M.union lowercase $ M.insert rootLabel True uppercase'
+            uppercase' = M.map (const False) uppercase
+            visited' = M.union lowercase uppercase'
+            visited'' = M.insert rootLabel True visited'
             isVisited = fromMaybe False $ M.lookup rootLabel visited
 
 
-findAllPaths2 :: M.Map String Bool -> Path -> Graph -> String -> [Path]
+findAllPaths2 :: M.Map String Int -> Path -> Graph -> String -> [Path]
 findAllPaths2 visited lastPath graph rootLabel
       | null neighbors = [lastPath ++ [rootLabel]]
-      | isVisited = [lastPath ++ [rootLabel]]
-      | otherwise = newPath : concatMap (findAllPaths2 visited' newPath graph) neighbors
+      | t >= 2 = [lastPath ++ [rootLabel]]
+      | visitAmount >= 2 = [lastPath ++ [rootLabel]]
+      | otherwise = newPath : concatMap (findAllPaths2 visited'' newPath graph) neighbors
       where (nodes, edges) = graph
             newPath = lastPath ++ [rootLabel]
             neighbors = S.toList $ fromJust $ M.lookup rootLabel edges
             (uppercase, lowercase) = M.partitionWithKey (curry (all isUpper . fst)) visited
-            uppercase' = M.map (const False) uppercase 
-            visited' = M.union lowercase $ M.insert rootLabel True uppercase'
-            isVisited = fromMaybe False $ M.lookup rootLabel visited
+            t = length $ M.filter (==2) lowercase
+            uppercase' = M.map (const 0) uppercase
+            visited' = M.union lowercase uppercase'
+            visited''
+                  | M.member rootLabel visited' = M.adjust (+1) rootLabel visited'
+                  | otherwise = M.insert rootLabel 1 visited'
+            visitAmount = fromMaybe 0 $ M.lookup rootLabel visited
 
 solve1 :: [Char] -> Int
 solve1 s = length . filter ((=="end") . last) $ findAllPaths1 M.empty [] graph "start"
       where graph = parse s
 
+filterInvalid :: S.Set String -> [Path] -> [Path]
+filterInvalid nodes = filter f 
+      where pred k = k /= "end" && k /= "start" && all isLower k
+            lowercase = S.filter pred nodes
+            count m n = length $ filter (==n) m
+            f m = (<=1) . length . filter id . map ((2==) . count m) $ S.toList lowercase
 
-solve2 s = length . filter ((=="end") . last) $ findAllPaths2 M.empty [] graph "start"
+solve2 s = length result
       where graph = parse s
+            pre = filter ((=="end") . last) $ findAllPaths2 M.empty [] graph "start"
+            result = filterInvalid (fst graph) pre
 
-answer1 :: IO Int
-answer1 = solve1 <$> input
-
-
-answer2 = solve2 <$> input
+-- answer1 :: IO Int
+-- answer1 = solve1 <$> input
 
 main :: IO ()
 main = do
-      x <- answer1
+      input <- getContents
+      let x = solve1 input
+      let y = solve2 input
       print x
+      print y
