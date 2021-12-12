@@ -54,8 +54,8 @@ findAllPaths1 visited lastPath graph rootLabel
 findAllPaths2 :: M.Map String Int -> Path -> Graph -> String -> [Path]
 findAllPaths2 visited lastPath graph rootLabel
       | null neighbors = [lastPath ++ [rootLabel]]
-      | t >= 1 = [lastPath ++ [rootLabel]]
-      | visitAmount >= 1 = [lastPath ++ [rootLabel]]
+      | t >= 2 = [lastPath ++ [rootLabel]]
+      | visitAmount >= 2 = [lastPath ++ [rootLabel]]
       | otherwise = newPath : concatMap (findAllPaths2 visited'' newPath graph) neighbors
       where (nodes, edges) = graph
             newPath = lastPath ++ [rootLabel]
