@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 import qualified Data.Map as M
 import Data.List.Split ( splitOn )
-import qualified Data.Bifunctor
+import Data.Bifunctor (bimap)
 
 toTuple :: [b] -> (b, b)
 toTuple [a, b] = (a, b)
@@ -15,18 +15,14 @@ type Poly = (PolyChains, PolyCount)
 parse :: String -> ([Operation], Poly)
 parse blob = (oper, (poly, polyCount))
       where (poly', oper') = toTuple $ splitOn "\n\n" blob
-            oper = map (Data.Bifunctor.bimap toTuple head
-                         . toTuple
-                         . splitOn " -> ")
-                    $ lines oper'
+            oper = map (bimap toTuple head . toTuple . splitOn " -> ") $ lines oper'
             poly = foldl1 (M.unionWith (+))
                            . zipWith (curry (M.fromList
                            . (: []) . (,1))) poly'
                    $ tail poly'
-            polyCount = foldl1 (M.unionWith (+)) $
-                        map (M.fromList . (\n -> [(n,1)])) poly'
+            polyCount = foldl1 (M.unionWith (+)) $ map (M.fromList . (\n -> [(n,1)])) poly'
 
-newPoly ::  PolyChains -> Operation -> Poly
+newPoly :: PolyChains -> Operation -> Poly
 newPoly polyCount (oper, to) = (new, M.fromList [(to, count)])
       where count = M.findWithDefault 0 oper polyCount
             new = M.fromList [((fst oper, to), count), ((to, snd oper), count)]
@@ -37,12 +33,9 @@ applyOper opers (poly, count) = (newPoly', newCount)
             newPoly' = foldl1 (M.unionWith (+)) $ map fst polysWithCount
             newCount = foldl (M.unionWith (+)) count $ map snd polysWithCount
 
-applyNOper :: Int -> [Operation] -> Poly -> Poly
-applyNOper n oper = last . take (n + 1) . iterate (applyOper oper)
-
 solve :: Int -> [Operation] -> Poly -> Integer
 solve n oper poly = max' - min'
-      where poly' = applyNOper n oper poly
+      where poly' = last . take (n + 1) $ iterate (applyOper oper) poly
             min' = minimum $ snd poly'
             max' = maximum $ snd poly'
 
