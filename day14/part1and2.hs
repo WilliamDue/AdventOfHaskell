@@ -31,14 +31,9 @@ newPoly polyCount (oper, to) = (new, M.fromList [(to, count)])
       where count = M.findWithDefault 0 oper polyCount
             new = M.fromList [((fst oper, to), count), ((to, snd oper), count)]
 
-findOper :: PolyChains -> [Operation] -> [Operation]
-findOper polyCount = filter (flip elem validOperKey . fst)
-      where validOperKey = M.keys polyCount
-
 applyOper :: [Operation] -> Poly -> Poly
 applyOper opers (poly, count) = (newPoly', newCount)
-      where opers' = findOper poly opers
-            polysWithCount = map (newPoly poly) opers'
+      where polysWithCount = map (newPoly poly) opers
             newPoly' = foldl1 (M.unionWith (+)) $ map fst polysWithCount
             newCount = foldl (M.unionWith (+)) count $ map snd polysWithCount
 
