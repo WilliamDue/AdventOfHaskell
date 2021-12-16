@@ -2,16 +2,19 @@
 import qualified Data.Map as M
 import qualified Data.Array as A
 import qualified Data.List as L
+import qualified Data.OrdPSQ as PQ
 import Data.Bifunctor ( second, first, bimap )
 import Data.Maybe ( mapMaybe, fromJust, isNothing, isJust, maybe, catMaybes)
 import Data.Foldable (minimumBy, Foldable (toList))
 import Data.Function (on)
 import Debug.Trace (traceShowId)
 import Data.Array (Ix(range))
+import qualified Text.Html.BlockTable as PQ
 
 type Pos = (Int, Int)
 type Graph = A.Array Pos Int
 type Neighbors = A.Array Pos [Pos]
+type Queue = PQ.OrdPSQ Pos (Explored Int) (Explored Int)
 type Dist = A.Array Pos (Explored Int)
 
 toIntList :: String -> [Int]
@@ -38,8 +41,8 @@ mkNeighbours graph = A.listArray bound $ map (neighbours graph) $ A.indices grap
 mkDist :: Graph -> Dist
 mkDist = flip A.listArray (repeat Inf) .  A.bounds
 
-mkQueue :: Graph -> M.Map Pos (Explored Int)
-mkQueue = M.fromList . map (\n -> (n, Inf)) . A.indices
+mkQueue :: Graph -> Queue
+mkQueue = PQ.fromList . map (\n -> (n, Inf, Inf)) . A.indices
 
 updateDist :: Dist -> (Pos, Int) -> Maybe (Pos, Explored Int)
 updateDist dist (key, val) = dist'
@@ -65,22 +68,29 @@ isInf :: Explored Int -> Bool
 isInf Inf = True
 isInf _ = False
 
+multiInsert :: Queue -> [(Pos, Explored Int)] -> Queue
+multiInsert q [] = q
+multiInsert q ((a, b):xs) = multiInsert (PQ.insert a b b q) xs
+
 dijkstra :: Pos -> Graph -> Dist
 dijkstra source' graph' = aux graph' queue distance
       where distance' = mkDist graph'
             distance = distance' A.// [(source', Exist 0)]
             neighbours' = mkNeighbours graph'
-            queue = M.insert source' (Exist 0) $ mkQueue graph'
-            aux :: Graph -> M.Map Pos (Explored Int) -> Dist -> Dist
+            queue = PQ.insert source' (Exist 0) (Exist 0) $ mkQueue graph'
+            aux :: Graph -> Queue -> Dist -> Dist
             aux graph q dist
-                  | null q = dist
-                  | isInf $ snd min' = dist
+                  | PQ.null q = dist
+                  | isNothing min' = dist
+                  | isInf value = dist
                   | otherwise = aux graph q'' $ dist A.// alt
-                        where min' = minimumBy (compare `on` snd) $ M.toList q
-                              (key, Exist val) = min'
-                              q' = M.delete key q
-                              q'' = flip M.union q'
-                                    . M.fromList
+                        where min' = PQ.findMin q
+                              Just (key, value, _) = min'
+                              val = case value of
+                                          Exist n -> n
+                                          Inf -> error "This can't happen" 
+                              q' = PQ.deleteMin q
+                              q'' = multiInsert q'
                                     . filter (not . isInf . snd)
                                     $ alt
                               alt = mapMaybe (updateDist dist . (\n -> (n, (val+) $ graph' A.! n)))
