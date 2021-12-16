@@ -10,18 +10,6 @@ import Data.Function (on)
 import Debug.Trace (traceShowId)
 import Data.Array (Ix(range))
 
-test :: String
-test = "1163751742\
-       \1381373672\
-       \2136511328\
-       \3694931569\
-       \7463417111\
-       \1319128137\
-       \1359912421\
-       \3125421639\
-       \1293138521\
-       \2311944581"
-
 type Pos = (Int, Int)
 type Graph = A.Array Pos Int
 type Dist = A.Array Pos (Maybe Int)
@@ -35,7 +23,7 @@ parse s = matrix
             s' = toIntList $ filter (/='\n') s
             maxY = length lines' - 1
             maxX = (length . head) lines' - 1
-            matrix = A.listArray ((0, 0), (maxX, maxY)) s'
+            matrix = A.listArray ((0, 0), (maxY, maxX)) s'
 
 neighbours :: Graph -> Pos -> [Pos]
 neighbours graph (x, y) = neighbours'
@@ -78,17 +66,31 @@ dijkstra source' graph' = aux graph' queue distance
                         where min' = getMinQ q dist
                               (key, val) = fromJust min'
                               q' = filter (/=key) q
-                              alt = mapMaybe (updateDist dist . (\n -> (n, (val+) $ graph' A.! n))) 
+                              alt = mapMaybe (updateDist dist . (\n -> (n, (val+) $ graph' A.! n)))
                                     . filter (`elem` q')
                                     $ neighbours graph key
 
+modIndex :: Pos -> Graph -> (Pos, Int)
+modIndex (y, x) graph = ((x, y),  if m' == 0 then 1 else m')
+      where m = sum [y `div` (maxY + 1), x `div` (1 + maxX)]
+            ((minY, minX), (maxY, maxX)) = A.bounds graph
+            pos = (x `mod` (1 + maxX), y `mod` (maxY + 1))
+            m' = 1 + (m + graph A.! pos - 1) `mod` 9
 
-solve1 :: Graph -> Int
-solve1 graph = fromJust $ dijkstra head' graph A.! last'
+scale :: Int -> Graph -> Graph
+scale s graph = graph' A.// [modIndex idx graph | idx <- A.indices graph']
+      where ((minY, minX), (maxY, maxX)) = A.bounds graph
+            bounds' = ((minY, minX), (s * (maxY + 1) - 1, s * (maxX + 1) - 1))
+            graph' = A.listArray bounds' [0..]
+
+solve :: Graph -> Int
+solve graph = fromJust $ dijkstra head' graph A.! last'
       where last' = snd $ A.bounds graph
             head' = fst $ A.bounds graph
 
 main :: IO ()
 main = do
       input <- getContents
-      print . solve1 $ parse input
+      let graph = parse input
+      print $ solve graph
+      print . solve $ scale 5 graph
