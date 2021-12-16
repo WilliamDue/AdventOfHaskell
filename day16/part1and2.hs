@@ -1,6 +1,7 @@
 import Data.List.Split (chunksOf)
 import Data.Bifunctor (second)
 
+
 data Packet = Packet { ver :: Int,
                        typ :: Int,
                        lab :: Maybe Bool,
@@ -69,12 +70,12 @@ getIdAndLength n
             bit11 = take 11 tail'
 
 iterNTranslate' :: Int -> String -> [Packet] -> ([Packet], String)
-iterNTranslate' 0 rem acc = (acc, rem)
+iterNTranslate' 0 rem acc = (reverse acc, rem)
 iterNTranslate' c rem acc = iterNTranslate' (c - 1) tail' (packet:acc)
       where (packet, tail') = translate' rem
 
 iterTranslate' :: String -> [Packet] -> [Packet]
-iterTranslate' "" acc = acc
+iterTranslate' "" acc = reverse acc
 iterTranslate' rem acc = iterTranslate' tail' (packet:acc)
       where (packet, tail') = translate' rem
 
@@ -104,14 +105,36 @@ translate :: String -> Packet
 translate = fst . translate'
 
 sumVersion :: Packet -> Int
-sumVersion Packet { ver=n, typ=_, lab=_, len=_, num=_, sub=Nothing } = n
-sumVersion Packet { ver=n, typ=_, lab=_, len=_, num=_, sub=Just sum' } = (n+) 
+sumVersion (Packet n _ _ _ _ Nothing) = n
+sumVersion (Packet n _ _ _ _ (Just sum')) = (n+)
                                                                          . sum
                                                                          . map sumVersion
                                                                          $ sum'
 
+boolToInt :: Bool -> Int
+boolToInt True = 1
+boolToInt False = 0
+
+eval :: Packet -> Int
+eval (Packet _ _ _ _ (Just n) Nothing) = n
+eval (Packet _ 0 _ _ _ (Just m)) = sum . map eval $ m
+eval (Packet _ 1 _ _ _ (Just m)) = product . map eval $ m
+eval (Packet _ 2 _ _ _ (Just m)) = minimum . map eval $ m
+eval (Packet _ 3 _ _ _ (Just m)) = maximum . map eval $ m
+eval (Packet _ 5 _ _ _ (Just [a, b])) = boolToInt $ eval b < eval a
+eval (Packet _ 6 _ _ _ (Just [a, b])) = boolToInt $ eval b > eval a
+eval (Packet _ 7 _ _ _ (Just [a, b])) = boolToInt $ eval b == eval a
+eval _ = error "Invalid syntax"
+
+solve1 :: Packet -> Int
+solve1 = sumVersion
+
+solve2 :: Packet -> Int
+solve2 = eval
+
 main :: IO ()
 main = do
       input <- getContents
-      let temp = parse input
-      print . sumVersion . translate $ temp
+      let ast = translate . parse $ input
+      print . solve1 $ ast
+      print . solve2 $ ast

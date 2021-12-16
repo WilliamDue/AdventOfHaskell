@@ -1,4 +1,0 @@
-[1 of 1] Compiling Main             ( part1and2.hs, part1and2.o )
-Linking part1and2.run ...
-./part1and2.run
-13
