@@ -12,9 +12,9 @@ toEnd str = (num, str')
             str' = dropWhile isDigit str
 
 toNumber :: String -> (ShellFishNum Int, String)
-toNumber str = (Number left right, drop 1 str')
-      where (left, tail') = parse' . drop 1 $ str
-            (right, str') = parse' . drop 1 $ tail'
+toNumber str = (Number left right, tail str')
+      where (left, tail') = parse' . tail $ str
+            (right, str') = parse' . tail $ tail'
 
 parse' :: String -> (ShellFishNum Int, String)
 parse' n
