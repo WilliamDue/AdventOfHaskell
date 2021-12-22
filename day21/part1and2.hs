@@ -1,7 +1,8 @@
 import Data.List.Split ( splitOn )
 import Control.Monad ( replicateM )
-import Data.List ( partition ) 
+import qualified Data.List as L
 import Data.Bifunctor ( bimap )
+import Data.Tuple (swap)
 
 
 parse :: String -> (Int, Int)
@@ -31,25 +32,34 @@ play1 a = scanl1 (+) . scanl1 (\x y -> mod' (x + y)) . addHead (mod' . (+a)) $ m
 play2 :: Int -> [Int]
 play2 a = scanl1 (+) . scanl1 (\x y -> mod' (x + y)) . addHead (mod' . (+a)) $ map player2 [0..]
 
-takeWhileOneMore :: (a -> Bool) -> [a] -> [a]
-takeWhileOneMore p = foldr (\x ys -> if p x then x:ys else [x]) []
-
 --solve1 :: String -> Int
 solve1 str = (3 * length n + 3) * last n
       where (a, b) = parse str
             n = takeWhile (<1000) . concat $ zipWith (\a b -> [a, b]) (play1 a) (play2 b)
 
---play1' :: Int -> Int -> [Int]
-play1' a b = map (scanl1 (+) . scanl1 (\x y -> mod' (x + y)) . addHead (mod' . (+a)) . map player1) $ replicateM b [1, 2, 3]
+-- I basically stole kens code since i was clue less but i get the idea of it.
 
-play2' a b = map (scanl1 (+) . scanl1 (\x y -> mod' (x + y)) . addHead (mod' . (+a)) . map player2) $ replicateM b [1, 2, 3]
+type Player = (Int, Int)
 
-test2 m str = bimap length length $ partition (even . length) n
-      where (a, b) = parse str
-            n = map (takeWhile (<21) . concat) $ zipWith (zipWith (\a b -> [a, b])) (play1' a m) (play2' b m)
+rollSums :: [[Int]]
+rollSums = L.group . L.sort . map sum . replicateM 3 $ [1, 2, 3]
+
+groupFunc :: (Player, Player) -> [Int] -> (Int, Int)
+groupFunc ((score, pos), player2) group
+      | score' >= 21 = (n, 0)
+      | otherwise = bimap (*n) (*n) . swap . countWins $ (player2, (score', pos'))
+      where n = length group
+            pos' = mod' $ pos + head group
+            score' = score + pos'
+
+countWins :: (Player, Player) -> (Int, Int)
+countWins players = bimap sum sum . unzip . map (groupFunc players) $ rollSums
+
+solve2 :: String -> Int
+solve2 = uncurry max . countWins . (\(p1, p2) -> ((0, p1), (0, p2))) . parse
 
 main :: IO ()
 main = do
       input <- getContents
       print . solve1 $ input
-      print $ test2 16 input
+      print . solve2 $ input
